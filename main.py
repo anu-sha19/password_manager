@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
 
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
@@ -32,7 +33,8 @@ def generate_password():
     password = "".join(password_list)
 
     #insert it into the entry
-    pyperclip.copy(password)# you don't have to copy your password manually. Password copied once you click "Generate Password"
+    pyperclip.copy(
+        password)  # you don't have to copy your password manually. Password copied once you click "Generate Password"
     password_entry.insert(0, password)
 
 
@@ -57,11 +59,11 @@ username.grid(column=0, row=2)
 password.grid(column=0, row=3)
 
 #Entry
-website_entry = Entry(width=53, bd=5)
+website_entry = Entry(width=34, bd=5)
 username_entry = Entry(width=53, bd=5)
 password_entry = Entry(width=34, bd=5)
 
-website_entry.grid(column=1, row=1, columnspan=2)
+website_entry.grid(column=1, row=1)
 username_entry.grid(column=1, row=2, columnspan=2)
 password_entry.grid(column=1, row=3)
 
@@ -72,24 +74,67 @@ username_entry.insert(0, "email123@gmail.com")
 
 # ---------------------------- SAVE PASSWORD -------------------------------
 def save_credentials():
-    if website_entry.get() == "" or username_entry.get() == "" or password_entry.get() == "":
+    website = website_entry.get()  #.get() fetches the entry
+    email = username_entry.get()
+    password = password_entry.get()
+
+    new_data = {
+        website: {
+            "email": email,
+            "password": password,
+        }
+    }
+    if website == "" or email == "" or password == "":
         messagebox.showwarning(title="ERROR!", message="Don't leave any of the fields empty!")
 
     else:
-        is_okay = messagebox.askyesnocancel(title=website_entry.get(), message=f"These are the details that you have"
-                                                                               f" \nEmail: {username_entry.get()} \nPassword: {password_entry.get()} \nSave Credentials?")
-        if is_okay:
-            with open("data.txt", mode="a") as file:  #.get() fetches the entry
-                file.write(f"{website_entry.get()}  | {username_entry.get()}  | {password_entry.get()} \n")
-                website_entry.delete(0, END)  #to keep the entries clean after saving
-                password_entry.delete(0, END)
+        try:
+            with open("data.json", "r") as file:
+                data = json.load(file)  #Reading old data
+
+        except FileNotFoundError:  #if there is no such file
+            with open("data.json", "w") as file:
+                json.dump(new_data, file, indent=4)
+
+        else:
+            data.update(new_data)  # updating old data with new data
+            with open("data.json", "w") as file:
+                json.dump(data, file, indent=4)  #saving updated data
+
+        finally:
+            website_entry.delete(0, END)  #to keep the entries clean after saving
+            password_entry.delete(0, END)
+
+
+def search_credentials():
+    website = website_entry.get().title()
+
+    try:
+        with open("data.json", "r") as file:
+            data = json.load(file)
+
+    except FileNotFoundError:
+        messagebox.showinfo(title="Website Credentials",
+                            message="No data file found")
+    else:
+        if website in data:
+            email = (data[website]["email"])
+            password = (data[website]["password"])
+
+            messagebox.showinfo(title="Website Credentials",
+                                message=f"Your Credentials for {website}:\nEmail: {email}\nPassword: {password}")
+        else:
+            messagebox.showinfo(title="Website Credentials",
+                                message=f"{website} not found in database!")
 
 
 #Buttons
 generate = Button(text="Generate Password", command=generate_password)
 add_button = Button(text="Add", width=46, command=save_credentials)
+search_button = Button(text="Search", width=15, command=search_credentials)
 
 generate.grid(column=2, row=3)
 add_button.grid(column=1, row=4, columnspan=2)
+search_button.grid(column=2, row=1)
 
 window.mainloop()
