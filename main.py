@@ -67,7 +67,7 @@ password_entry.grid(column=1, row=3)
 
 #Focus cursor on the first entry i.e website_entry
 website_entry.focus()
-username_entry.insert(0, "ghimire23.anusha@gmail.com")
+username_entry.insert(0, "email123@gmail.com")
 
 
 # ---------------------------- SAVE PASSWORD -------------------------------
